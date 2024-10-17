@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getAllAccidentReport, updateAccidentReport } from "../../services/AccidentReportService.js";
+import { getAllAccidentReport, sendResponse } from "../../services/AccidentReportService.js";
 
 const CustomerAccidentReports = () => {
     const [accidentReports, setAccidentReports] = useState([]);
     const [responseText, setResponseText] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState('');
 
     // Fetch all accident reports when the component loads
     useEffect(() => {
@@ -13,9 +14,9 @@ const CustomerAccidentReports = () => {
             try {
                 const result = await getAllAccidentReport();
                 setAccidentReports(result.data);
-                setLoading(false);
             } catch (error) {
                 setError('Error fetching accident reports');
+            } finally {
                 setLoading(false);
             }
         };
@@ -34,13 +35,10 @@ const CustomerAccidentReports = () => {
     // Handle helpdesk response submission
     const handleResponseSubmit = async (reportId) => {
         try {
-            const updatedReport = {
-                ...accidentReports.find((report) => report.reportId === reportId),
-                adminResponse: responseText[reportId]
-            };
-
-            await updateAccidentReport(reportId, updatedReport); // Update the report with helpdesk response
-            alert('Response submitted successfully.');
+            const responseTextValue = responseText[reportId];
+            await sendResponse(reportId, responseTextValue); // Use sendResponse to update response and status
+            setSuccessMessage('Response submitted successfully.');
+            setTimeout(() => setSuccessMessage(''), 3000); // Clear the success message after 3 seconds
         } catch (error) {
             alert('Error submitting response.');
         }
@@ -101,6 +99,12 @@ const CustomerAccidentReports = () => {
             fontSize: '16px',
             textAlign: 'center',
         },
+        successText: {
+            color: 'green',
+            fontSize: '16px',
+            textAlign: 'center',
+            marginBottom: '20px',
+        },
     };
 
     if (loading) return <p style={styles.loadingText}>Loading reports...</p>;
@@ -109,6 +113,7 @@ const CustomerAccidentReports = () => {
     return (
         <div style={styles.container}>
             <h2 style={styles.heading}>Customer Accident Reports</h2>
+            {successMessage && <p style={styles.successText}>{successMessage}</p>}
             <table style={styles.table}>
                 <thead>
                 <tr>
@@ -117,6 +122,7 @@ const CustomerAccidentReports = () => {
                     <th style={styles.th}>Accident Date</th>
                     <th style={styles.th}>Description</th>
                     <th style={styles.th}>Location</th>
+                    <th style={styles.th}>Status</th>
                     <th style={styles.th}>Admin Response</th>
                 </tr>
                 </thead>
@@ -128,14 +134,15 @@ const CustomerAccidentReports = () => {
                         <td style={styles.td}>{report.accidentDate}</td>
                         <td style={styles.td}>{report.description}</td>
                         <td style={styles.td}>{report.location}</td>
+                        <td style={styles.td}>{report.status}</td>
                         <td style={styles.td}>
-                                <textarea
-                                    style={styles.textarea}
-                                    rows="3"
-                                    placeholder="Enter your response"
-                                    value={responseText[report.reportId] || ''}
-                                    onChange={(e) => handleResponseChange(report.reportId, e.target.value)}
-                                />
+                            <textarea
+                                style={styles.textarea}
+                                rows="3"
+                                placeholder="Enter your response"
+                                value={responseText[report.reportId] || ''}
+                                onChange={(e) => handleResponseChange(report.reportId, e.target.value)}
+                            />
                             <button
                                 style={styles.submitButton}
                                 onClick={() => handleResponseSubmit(report.reportId)}

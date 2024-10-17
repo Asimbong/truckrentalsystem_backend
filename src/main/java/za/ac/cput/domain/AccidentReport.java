@@ -13,6 +13,8 @@ public class AccidentReport {
     private LocalDate accidentDate;
     private String description;
     private String location;
+    private String response;
+    private String status;
 
     @ManyToOne
     @JoinColumn(name = "customerID", nullable = false)
@@ -27,6 +29,8 @@ public class AccidentReport {
         this.description = builder.description;
         this.location = builder.location;
         this.customer = builder.customer;
+        this.response = builder.response;
+        this.status = builder.status;
     }
 
     public int getReportId() {
@@ -45,6 +49,10 @@ public class AccidentReport {
         return location;
     }
 
+    public String getResponse(){return response;}
+
+    public String getStatus(){return status;}
+
     public Customer getCustomer() {
         return customer;
     }
@@ -54,12 +62,12 @@ public class AccidentReport {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AccidentReport that = (AccidentReport) o;
-        return reportId == that.reportId && Objects.equals(accidentDate, that.accidentDate) && Objects.equals(description, that.description) && Objects.equals(location, that.location) && Objects.equals(customer, that.customer);
+        return reportId == that.reportId && Objects.equals(accidentDate, that.accidentDate) && Objects.equals(description, that.description) && Objects.equals(location, that.location) && Objects.equals(response, that.response) && Objects.equals(status, that.status) && Objects.equals(customer, that.customer);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(reportId, accidentDate, description, location, customer);
+        return Objects.hash(reportId, accidentDate, description, location, response, status, customer);
     }
 
     @Override
@@ -69,6 +77,8 @@ public class AccidentReport {
                 ", accidentDate=" + accidentDate +
                 ", description='" + description + '\'' +
                 ", location='" + location + '\'' +
+                ", response='" + response + '\'' +
+                ", status='" + status + '\'' +
                 ", customer=" + customer +
                 '}';
     }
@@ -78,6 +88,8 @@ public class AccidentReport {
         private LocalDate accidentDate;
         private String description;
         private String location;
+        private String response;
+        private String status;
         private Customer customer;
 
         public Builder setReportId(int reportId) {
@@ -100,6 +112,16 @@ public class AccidentReport {
             return this;
         }
 
+        public Builder setResponse(String response) {
+            this.response = response;
+            return this;
+        }
+
+        public Builder setStatus(String status) {
+            this.status = status;
+            return this;
+        }
+
         public Builder setCustomer(Customer customer) {
             this.customer = customer;
             return this;
@@ -110,6 +132,8 @@ public class AccidentReport {
             this.accidentDate = accidentReport.accidentDate;
             this.description = accidentReport.description;
             this.location = accidentReport.location;
+            this.response = accidentReport.response;
+            this.status = accidentReport.status;
             this.customer = accidentReport.customer;
             return this;
         }

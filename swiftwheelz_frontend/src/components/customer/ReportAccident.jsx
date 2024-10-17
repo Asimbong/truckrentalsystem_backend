@@ -3,7 +3,7 @@ import {
     findReportsByCustomerId,
     createAccidentReport,
     updateAccidentReport,
-    deleteAccidentReportById
+    deleteAccidentReportById, getReportsByCustomerEmail
 } from "../../services/AccidentReportService.js";
 import { AuthContext } from "../AuthContext.jsx";
 
@@ -15,27 +15,33 @@ const ReportAccident = () => {
         accidentDate: '',
         description: '',
         location: '',
-        customer: { customerID: auth.customerID }
+        customer: { customerID: auth.email }
     });
 
     // Fetch customer-specific reports on page load
     useEffect(() => {
-        if (auth.customerID) {
+        if (auth.email) {
+            console.log("cust email:", auth.email);
             fetchReports();
         } else {
-            console.error("No customer ID found in auth context.");
+            console.error("No customer email found in auth context.");
         }
-    }, [auth.customerID]);
+    }, [auth.email]);
 
     const fetchReports = async () => {
         try {
-            const response = await findReportsByCustomerId(auth.customerID);
-            console.log("Reports response:", response); // Log the response
-            if (response && response.data) {
-                setReports(response.data);
-            } else {
-                console.error("Unexpected response structure:", response);
-            }
+            if (auth?.email) {
+                const token = auth?.token;
+                console.log("fetchReports token", token);
+                const response = await getReportsByCustomerEmail(auth.email,token);
+
+                console.log("Reports response:", auth.email); // Log the response
+                if (response && response.data) {
+                    setReports(response.data);
+                } else {
+                    console.error("Unexpected response structure:", response);
+                }
+            } // Closing if block
         } catch (error) {
             if (error.response) {
                 console.error("Error fetching reports", error.response.data);
@@ -44,6 +50,7 @@ const ReportAccident = () => {
             }
         }
     };
+
 
     // Handle form input changes
     const handleInputChange = (e) => {
@@ -63,10 +70,11 @@ const ReportAccident = () => {
             };
 
             if (editingReport) {
-                await updateAccidentReport(editingReport.reportId, dataToSend);
+                const token = auth?.token;
+                await updateAccidentReport(editingReport.reportId, dataToSend, token); // Include token here
                 setEditingReport(null); // Reset editing state
             } else {
-                await createAccidentReport(dataToSend);
+                await createAccidentReport(dataToSend, token); // Include token here
             }
 
             setFormData({
@@ -95,7 +103,7 @@ const ReportAccident = () => {
     // Handle delete
     const handleDelete = async (reportId) => {
         try {
-            await deleteAccidentReportById(reportId);
+            await deleteAccidentReportById(reportId, auth.token); // Include token here
             fetchReports(); // Refresh the list of reports
         } catch (error) {
             console.error("Error deleting report", error);
@@ -219,7 +227,7 @@ const ReportAccident = () => {
 
     return (
         <div style={styles.container}>
-            <h1 style={styles.h1}>Swiftwheelz is here to help you.</h1>
+            <h1 style={styles.h1}>Swiftwheelz is here to help you</h1>
 
             {/* Form for creating/updating reports */}
             <form onSubmit={handleSubmit}>
@@ -270,7 +278,8 @@ const ReportAccident = () => {
                     <th style={styles.th}>Date</th>
                     <th style={styles.th}>Description</th>
                     <th style={styles.th}>Location</th>
-                    <th style={styles.th}>Admin Response</th>
+                    <th style={styles.th}>Status</th>
+                    <th style={styles.th}>Response</th>
                     <th style={styles.th}>Actions</th>
                 </tr>
                 </thead>
@@ -281,14 +290,21 @@ const ReportAccident = () => {
                         <td style={styles.td}>{report.accidentDate}</td>
                         <td style={styles.td}>{report.description}</td>
                         <td style={styles.td}>{report.location}</td>
+                        <td style={styles.td}>{report.status}</td>
+                        <td style={styles.td} style={styles.response}>{report.response}</td>
                         <td style={styles.td}>
-                            <span style={styles.response}>
-                                {report.adminResponse ? report.adminResponse : 'No response yet'}
-                            </span>
-                        </td>
-                        <td style={styles.td}>
-                            <button onClick={() => handleEdit(report)} style={styles.editButton}>Edit</button>
-                            <button onClick={() => handleDelete(report.reportId)} style={styles.deleteButton}>Delete</button>
+                            <button
+                                style={styles.editButton}
+                                onClick={() => handleEdit(report)}
+                            >
+                                Edit
+                            </button>
+                            <button
+                                style={styles.deleteButton}
+                                onClick={() => handleDelete(report.reportId)}
+                            >
+                                Delete
+                            </button>
                         </td>
                     </tr>
                 ))}
